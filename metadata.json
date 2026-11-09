@@ -1,0 +1,6 @@
+{
+  "name": "PulseTeam - Task & Workflow Command",
+  "description": "Small team task assignment and management with real-time timer tracking, WhatsApp notifications, supervisor helicopter view, and workload distribution analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
