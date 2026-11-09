@@ -10,7 +10,9 @@ import {
   Compass, 
   Kanban, 
   CheckSquare, 
-  BarChart3 
+  BarChart3,
+  Users,
+  KeyRound
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -21,6 +23,7 @@ export const Navbar: React.FC = () => {
     setIsCreateModalOpen,
     openWhatsAppModal,
     setIsUserSwitcherOpen,
+    setIsLoginModalOpen,
     activeRunningTaskId,
     notifications,
   } = useTasks();
@@ -116,46 +119,57 @@ export const Navbar: React.FC = () => {
 
             <div className="h-5 w-px bg-slate-200 mx-1" />
 
-            {/* User Profile / Role Switcher */}
-            <button
-              onClick={() => setIsUserSwitcherOpen(true)}
-              className="flex items-center gap-2 p-1.5 pl-2 rounded-lg hover:bg-slate-100 border border-slate-200/80 transition-colors text-left"
-              title="Switch user role or identity"
-            >
-              <div className="relative">
-                {currentUser.avatar ? (
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    className="w-7 h-7 rounded-full object-cover border border-slate-200"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200">
-                    {currentUser.name.charAt(0)}
-                  </div>
-                )}
-                <div
-                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
-                    currentUser.role === 'spv' ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}
-                />
-              </div>
-
-              <div className="hidden lg:block text-left pr-1">
-                <div className="text-xs font-semibold text-slate-800 leading-tight flex items-center gap-1">
-                  <span>{currentUser.name}</span>
-                  {currentUser.role === 'spv' ? (
-                    <ShieldCheck className="w-3 h-3 text-amber-600 shrink-0" />
+            {/* User Profile / Role & Team Switcher */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsUserSwitcherOpen(true)}
+                className="flex items-center gap-2 p-1.5 pl-2 rounded-lg hover:bg-slate-100 border border-slate-200/80 transition-colors text-left"
+                title="Manage team members, switch roles, or add members"
+              >
+                <div className="relative">
+                  {currentUser.avatar ? (
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
-                    <UserCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200">
+                      {currentUser.name.charAt(0)}
+                    </div>
                   )}
+                  <div
+                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                      currentUser.role === 'spv' ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`}
+                  />
                 </div>
-                <div className="text-[11px] text-slate-500 truncate max-w-[120px]">
-                  {currentUser.role === 'spv' ? 'Supervisor / SPV' : currentUser.roleTitle}
+
+                <div className="hidden lg:block text-left pr-1">
+                  <div className="text-xs font-semibold text-slate-800 leading-tight flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    {currentUser.role === 'spv' ? (
+                      <ShieldCheck className="w-3 h-3 text-amber-600 shrink-0" />
+                    ) : (
+                      <UserCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500 truncate max-w-[120px]">
+                    {currentUser.role === 'spv' ? 'Supervisor / SPV' : currentUser.roleTitle}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 rounded-lg transition-colors"
+                title="Log in with email/password or register new account"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">Sign In</span>
+              </button>
+            </div>
           </div>
         </div>
 

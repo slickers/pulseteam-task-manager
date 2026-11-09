@@ -72,6 +72,14 @@ interface TaskContextType {
   }) => void;
   isUserSwitcherOpen: boolean;
   setIsUserSwitcherOpen: (open: boolean) => void;
+  // User Management & Auth
+  addUser: (userData: Omit<User, 'id'>) => User;
+  updateUser: (userId: string, updates: Partial<User>) => void;
+  removeUser: (userId: string) => { success: boolean; error?: string };
+  login: (email: string, password?: string) => boolean;
+  logout: () => void;
+  isLoginModalOpen: boolean;
+  setIsLoginModalOpen: (open: boolean) => void;
   // Universal Search & Filter System
   filters: TaskFilterState;
   setFilter: <K extends keyof TaskFilterState>(key: K, value: TaskFilterState[K]) => void;
@@ -86,7 +94,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>(() => StorageService.getTasks());
-  const [users] = useState<User[]>(() => StorageService.getUsers());
+  const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
   const [currentUser, setCurrentUserState] = useState<User>(() => StorageService.getCurrentUser());
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [comments, setComments] = useState<TaskComment[]>(() => StorageService.getComments());
@@ -106,6 +114,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
   const [whatsAppData, setWhatsAppData] = useState<TaskContextType['whatsAppData']>(null);
   const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Search & Global Filters
   const [filters, setFiltersState] = useState<TaskFilterState>(DEFAULT_FILTERS);
@@ -218,6 +227,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sync state from storage reload
   const reloadData = useCallback(() => {
     setTasks(StorageService.getTasks());
+    setUsers(StorageService.getUsers());
     setComments(StorageService.getComments());
     setSessions(StorageService.getSessions());
     setNotifications(StorageService.getNotifications());
@@ -229,8 +239,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (type === 'TASKS_UPDATED' || type === 'COMMENT_ADDED' || type === 'SESSION_LOGGED' || type === 'NOTIFICATION_SENT' || type === 'RESET_DATA') {
         reloadData();
       }
+      if (type === 'USERS_UPDATED') {
+        setUsers(StorageService.getUsers());
+      }
       if (type === 'USER_CHANGED') {
         setCurrentUserState(StorageService.getCurrentUser());
+      }
+      if (type === 'USER_LOGGED_OUT') {
+        setIsLoginModalOpen(true);
       }
     });
     return unsubscribe;
@@ -486,6 +502,45 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsWhatsAppModalOpen(true);
   };
 
+  const addUser = (userData: Omit<User, 'id'>): User => {
+    const newUser = StorageService.addUser(userData);
+    setUsers(StorageService.getUsers());
+    return newUser;
+  };
+
+  const updateUser = (userId: string, updates: Partial<User>) => {
+    const updated = StorageService.updateUser(userId, updates);
+    setUsers(updated);
+    if (currentUser.id === userId) {
+      setCurrentUserState({ ...currentUser, ...updates });
+    }
+  };
+
+  const removeUser = (userId: string): { success: boolean; error?: string } => {
+    const res = StorageService.removeUser(userId);
+    if (res.success) {
+      setUsers(StorageService.getUsers());
+      setTasks(StorageService.getTasks());
+      setCurrentUserState(StorageService.getCurrentUser());
+    }
+    return res;
+  };
+
+  const login = (email: string, password?: string): boolean => {
+    const user = StorageService.login(email, password);
+    if (user) {
+      setCurrentUserState(user);
+      setIsLoginModalOpen(false);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    StorageService.logout();
+    setIsLoginModalOpen(true);
+  };
+
   return (
     <TaskContext.Provider
       value={{
@@ -519,6 +574,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openWhatsAppModal,
         isUserSwitcherOpen,
         setIsUserSwitcherOpen,
+        // User Management & Auth
+        addUser,
+        updateUser,
+        removeUser,
+        login,
+        logout,
+        isLoginModalOpen,
+        setIsLoginModalOpen,
         // Universal Search & Filter System
         filters,
         setFilter,

@@ -8,6 +8,7 @@ import { TaskProvider, useTasks } from './context/TaskContext';
 import { Navbar } from './components/Navbar';
 import { ActiveTimerDock } from './components/ActiveTimerDock';
 import { UserSwitcherModal } from './components/UserSwitcherModal';
+import { LoginModal } from './components/LoginModal';
 import { WhatsAppModal } from './components/WhatsAppModal';
 import { TaskDetailModal } from './components/TaskDetailModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
@@ -38,6 +39,7 @@ const MainLayout: React.FC = () => {
       <CreateTaskModal />
       <WhatsAppModal />
       <UserSwitcherModal />
+      <LoginModal />
 
       {/* Quiet Footer */}
       <footer className="border-t border-slate-200 py-6 mt-auto bg-white/70 text-center text-xs text-slate-500">

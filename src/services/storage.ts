@@ -5,56 +5,66 @@ export const INITIAL_USERS: User[] = [
     id: 'user_sarah_spv',
     name: 'Sarah Jenkins',
     email: 'sarah.jenkins@pulseteam.internal',
+    password: 'password123',
     role: 'spv',
     roleTitle: 'Product & Operations Lead (SPV)',
     avatar: '/src/assets/images/avatar_sarah_spv_1794210536825.jpg',
     phone: '+6281234567890',
     department: 'Quality & Ops',
     weeklyCapacityHours: 40,
+    joinedDate: '2026-01-10',
   },
   {
     id: 'user_alex_dev',
     name: 'Alex Rivera',
     email: 'alex.rivera@pulseteam.internal',
+    password: 'password123',
     role: 'staff',
     roleTitle: 'Senior Full-Stack Engineer',
     avatar: '/src/assets/images/avatar_alex_dev_1794210538039.jpg',
     phone: '+6281122334455',
     department: 'Engineering',
     weeklyCapacityHours: 40,
+    joinedDate: '2026-02-15',
   },
   {
     id: 'user_maya_design',
     name: 'Maya Lin',
     email: 'maya.lin@pulseteam.internal',
+    password: 'password123',
     role: 'staff',
     roleTitle: 'Lead Product & UI/UX Designer',
     avatar: '/src/assets/images/avatar_maya_designer_1794210537426.jpg',
     phone: '+6281987654321',
     department: 'Design',
     weeklyCapacityHours: 35,
+    joinedDate: '2026-03-01',
   },
   {
     id: 'user_david_qa',
     name: 'David Kim',
     email: 'david.kim@pulseteam.internal',
+    password: 'password123',
     role: 'staff',
     roleTitle: 'DevOps & Quality Assurance',
     avatar: '/src/assets/images/avatar_david_qa_1794210538270.jpg',
     phone: '+6281344556677',
     department: 'Engineering',
     weeklyCapacityHours: 40,
+    joinedDate: '2026-03-12',
   },
   {
     id: 'user_elena_marketing',
     name: 'Elena Rostova',
     email: 'elena.rostova@pulseteam.internal',
+    password: 'password123',
     role: 'staff',
     roleTitle: 'Client Success & Marketing Specialist',
     avatar: '', // CSS styled fallback with initials
     phone: '+6281566778899',
     department: 'Marketing',
     weeklyCapacityHours: 35,
+    joinedDate: '2026-04-05',
   },
 ];
 
@@ -372,16 +382,115 @@ export const StorageService = {
     return getFromStorage<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
   },
 
+  saveUsers(users: User[]): void {
+    saveToStorage(STORAGE_KEYS.USERS, users);
+    notifyRealtimeChange('USERS_UPDATED', users);
+  },
+
+  addUser(userData: Omit<User, 'id'>): User {
+    const users = this.getUsers();
+    const newUser: User = {
+      ...userData,
+      id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      joinedDate: userData.joinedDate || new Date().toISOString().split('T')[0],
+      weeklyCapacityHours: userData.weeklyCapacityHours || 40,
+      avatar: userData.avatar || '',
+      password: userData.password || 'password123',
+    };
+    const updated = [...users, newUser];
+    this.saveUsers(updated);
+    return newUser;
+  },
+
+  updateUser(userId: string, updates: Partial<User>): User[] {
+    const users = this.getUsers();
+    const updated = users.map((u) => (u.id === userId ? { ...u, ...updates } : u));
+    this.saveUsers(updated);
+
+    // If current logged in user was updated, keep currentUser synced
+    const current = this.getCurrentUser();
+    if (current && current.id === userId) {
+      this.setCurrentUser({ ...current, ...updates });
+    }
+    return updated;
+  },
+
+  removeUser(userId: string): { success: boolean; error?: string } {
+    const users = this.getUsers();
+    if (users.length <= 1) {
+      return { success: false, error: 'Cannot remove the only remaining user in the organization.' };
+    }
+
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser) {
+      return { success: false, error: 'User not found.' };
+    }
+
+    // Check if target is the last supervisor
+    const supervisors = users.filter((u) => u.role === 'spv');
+    if (targetUser.role === 'spv' && supervisors.length <= 1) {
+      return { success: false, error: 'Cannot remove the only supervisor. Please promote another staff member to SPV first.' };
+    }
+
+    // Filter out user
+    const updatedUsers = users.filter((u) => u.id !== userId);
+    this.saveUsers(updatedUsers);
+
+    // Reassign any tasks assigned to this user to another user (e.g. primary supervisor)
+    const fallbackUser = updatedUsers.find((u) => u.role === 'spv') || updatedUsers[0];
+    const tasks = this.getTasks();
+    const updatedTasks = tasks.map((t) => {
+      if (t.assigneeId === userId) {
+        return {
+          ...t,
+          assigneeId: fallbackUser.id,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return t;
+    });
+    this.saveTasks(updatedTasks);
+
+    // If current user is the one being removed, switch to fallback user
+    const current = this.getCurrentUser();
+    if (current && current.id === userId) {
+      this.setCurrentUser(fallbackUser);
+    }
+
+    return { success: true };
+  },
+
   getCurrentUser(): User {
     const saved = getFromStorage<User | null>(STORAGE_KEYS.CURRENT_USER, null);
     if (saved) return saved;
     // Default to Sarah (SPV) so supervisor view is immediately inspectable
-    return INITIAL_USERS[0];
+    const users = this.getUsers();
+    return users[0] || INITIAL_USERS[0];
   },
 
   setCurrentUser(user: User): void {
     saveToStorage(STORAGE_KEYS.CURRENT_USER, user);
     notifyRealtimeChange('USER_CHANGED', user);
+  },
+
+  login(email: string, password?: string): User | null {
+    const users = this.getUsers();
+    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
+    if (!user) return null;
+
+    // Check password if set
+    if (password && user.password && user.password !== password.trim()) {
+      return null;
+    }
+
+    this.setCurrentUser(user);
+    return user;
+  },
+
+  logout(): void {
+    // Keep in demo mode or set to guest/null
+    saveToStorage(STORAGE_KEYS.CURRENT_USER, null);
+    notifyRealtimeChange('USER_LOGGED_OUT');
   },
 
   getTasks(): Task[] {

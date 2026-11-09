@@ -6,12 +6,14 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   role: UserRole;
   roleTitle: string;
   avatar: string;
   phone: string;
   department: Department;
   weeklyCapacityHours: number;
+  joinedDate?: string;
 }
 
 export type TaskStatus = 'new' | 'ongoing' | 'waiting_response' | 'done';
