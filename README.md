@@ -150,3 +150,16 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 - **Icons**: Lucide React
 - **Animations**: Motion
 - **State & Realtime**: React Context + localStorage + BroadcastChannel API
+
+
+## Screenshots ##
+
+![Dashboard](https://github.com/slickers/pulseteam-task-manager/blob/main/task-apps/01.PNG?raw=true)
+
+![Helicopter View](https://github.com/slickers/pulseteam-task-manager/blob/main/task-apps/02.PNG?raw=true)
+
+![Task Board - Kanban](https://github.com/slickers/pulseteam-task-manager/blob/main/task-apps/03.PNG?raw=true)
+
+![Task Board - Tables](https://github.com/slickers/pulseteam-task-manager/blob/main/task-apps/04.PNG?raw=true)
+
+![My Task](https://github.com/slickers/pulseteam-task-manager/blob/main/task-apps/05.PNG?raw=true)
